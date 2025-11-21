@@ -1,10 +1,10 @@
-// /Users/webasebrandings/Downloads/new_far-main 2/src/Screen1/Shopping/icons/Buying.tsx
+// /Users/webasebrandings/Downloads/new-main/src/Screen1/Shopping/icons/Buying.tsx
 import React, { useState, useContext, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ScrollView, Dimensions, FlatList } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CartContext } from '../ShoppingContent';
-import { getBackendUrl, getImageUrl } from '../../../../src/util/backendConfig'; // Import getImageUrl
+import { getProductImageUrl } from '../../../../src/util/backendConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -34,7 +34,6 @@ const Buying = () => {
   };
 
   const handleBuyNow = () => {
-    // Implement buy now functionality
     Alert.alert('Order Placed', `Your order for ${product.name} (${quantity}) has been placed successfully!`);
     navigation.navigate('Order');
   };
@@ -59,15 +58,44 @@ const Buying = () => {
     itemVisiblePercentThreshold: 50
   }).current;
 
-  const renderImageItem = ({ item }: { item: string }) => (
-    <View style={styles.imageContainer}>
-      <Image
-        source={{ uri: getImageUrl(item) || 'https://via.placeholder.com/300' }} // Use getImageUrl function
-        style={styles.productImage}
-        resizeMode="contain"
-      />
-    </View>
-  );
+  const renderImageItem = ({ item, index }: { item: string; index: number }) => {
+    const imageUrl = getProductImageUrl(item);
+    
+    console.log('🖼️ Buying Screen Image:', {
+      index: index,
+      original: item,
+      finalUrl: imageUrl
+    });
+
+    return (
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.productImage}
+          resizeMode="contain"
+          onError={(e) => {
+            console.log('❌ Buying screen image failed:', {
+              url: imageUrl,
+              original: item,
+              error: e.nativeEvent.error
+            });
+          }}
+          onLoad={() => {
+            console.log('✅ Buying screen image loaded:', imageUrl);
+          }}
+        />
+      </View>
+    );
+  };
+
+  // Log product details when component mounts
+  React.useEffect(() => {
+    console.log('🔄 Buying Screen Product Details:', {
+      name: product.name,
+      images: product.images,
+      firstImageUrl: getProductImageUrl(product.images?.[0])
+    });
+  }, [product]);
 
   return (
     <View style={styles.container}>

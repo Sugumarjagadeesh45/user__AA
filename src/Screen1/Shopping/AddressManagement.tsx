@@ -174,80 +174,138 @@ const AddressManagement = () => {
     );
   };
 
-  const getAddressFromCoordinates = async (latitude: number, longitude: number): Promise<string> => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-      );
-      const data = await response.json();
-      
-      if (data && data.display_name) {
-        return data.display_name;
-      }
-      throw new Error('No address found');
-    } catch (error) {
-      console.error('Error fetching address from coordinates:', error);
-      throw error;
-    }
-  };
 
-  const fetchCurrentLocation = async () => {
-    setFetchingLocation(true);
+  // Replace the getAddressFromCoordinates function with this improved version
+const getAddressFromCoordinates = async (latitude: number, longitude: number): Promise<string> => {
+  try {
+    // First try with OpenStreetMap Nominatim
     try {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Permission Denied', 'Location permission is required');
-          setFetchingLocation(false);
-          return;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+        { 
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'YourAppName/1.0' // Add a user agent to avoid being blocked
+          }
+        }
+      );
+      
+      clearTimeout(timeoutId);
+      
+      // Check if response is OK and is JSON
+      const contentType = response.headers.get('content-type');
+      if (response.ok && contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        
+        if (data && data.display_name) {
+          return data.display_name;
         }
       }
-
-      Geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const address = await getAddressFromCoordinates(latitude, longitude);
-            
-            // Parse address components (simplified parsing)
-            const addressParts = address.split(',');
-            const city = addressParts[addressParts.length - 3]?.trim() || 'City';
-            const state = addressParts[addressParts.length - 2]?.trim() || 'State';
-            const pincodeMatch = address.match(/\b\d{6}\b/);
-            const pincode = pincodeMatch ? pincodeMatch[0] : '000000';
-            
-            setFormData(prev => ({
-              ...prev,
-              addressLine1: address,
-              city: city,
-              state: state,
-              pincode: pincode,
-            }));
-
-            Alert.alert('Success', 'Location fetched successfully');
-            
-          } catch (error) {
-            console.error('Error getting address:', error);
-            Alert.alert('Error', 'Failed to get address from location');
-          } finally {
-            setFetchingLocation(false);
-          }
-        },
-        (error) => {
-          console.error('Location Error:', error.message);
-          setFetchingLocation(false);
-          Alert.alert('Location Error', 'Could not get your current location');
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-      );
-    } catch (error) {
-      console.error('Error fetching location:', error);
-      setFetchingLocation(false);
-      Alert.alert('Error', 'Failed to fetch current location');
+    } catch (nominatimError) {
+      console.log('Nominatim service failed, trying alternative:', nominatimError.message);
     }
-  };
+    
+    // Fallback to a simple address format
+    console.log('Using fallback address format');
+    return `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+    
+  } catch (error) {
+    console.error('Error in getAddressFromCoordinates:', error);
+    // Return a generic address as fallback
+    return `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+  }
+};
+
+
+
+
+// Update the fetchCurrentLocation function in AddressManagement.tsx
+const fetchCurrentLocation = async () => {
+  setFetchingLocation(true);
+  try {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        Alert.alert('Permission Denied', 'Location permission is required');
+        setFetchingLocation(false);
+        return;
+      }
+    }
+
+    Geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const address = await getAddressFromCoordinates(latitude, longitude);
+          
+          // Parse address components (simplified parsing)
+          const addressParts = address.split(',');
+          const city = addressParts[addressParts.length - 3]?.trim() || 'City';
+          const state = addressParts[addressParts.length - 2]?.trim() || 'State';
+          const pincodeMatch = address.match(/\b\d{6}\b/);
+          const pincode = pincodeMatch ? pincodeMatch[0] : '000000';
+          
+          setFormData(prev => ({
+            ...prev,
+            addressLine1: address,
+            city: city,
+            state: state,
+            pincode: pincode,
+          }));
+
+          Alert.alert('Success', 'Location fetched successfully');
+          
+        } catch (error) {
+          console.error('Error getting address:', error);
+          
+          // If we can't get address, at least populate coordinates
+          setFormData(prev => ({
+            ...prev,
+            addressLine1: `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            city: 'City',
+            state: 'State',
+            pincode: '000000',
+          }));
+          
+          Alert.alert('Partial Success', 'Location coordinates fetched. Please fill in the address details manually.');
+        } finally {
+          setFetchingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Location Error:', error.message);
+        setFetchingLocation(false);
+        
+        let errorMessage = 'Could not get your current location';
+        if (error.code === 1) {
+          errorMessage = 'Location permission denied. Please enable location permissions in your device settings.';
+        } else if (error.code === 2) {
+          errorMessage = 'Location unavailable. Please check your location settings.';
+        } else if (error.code === 3) {
+          errorMessage = 'Location request timed out. Please try again.';
+        }
+        
+        Alert.alert('Location Error', errorMessage);
+      },
+      { 
+        enableHighAccuracy: true, 
+        timeout: 15000, 
+        maximumAge: 10000 
+      }
+    );
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    setFetchingLocation(false);
+    Alert.alert('Error', 'Failed to fetch current location. Please try again.');
+  }
+};
+
+
 
   if (loading) {
     return (

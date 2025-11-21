@@ -53,15 +53,16 @@ export const AddressProvider: React.FC<{ children: ReactNode }> = ({ children })
     initializeAddressData();
   }, []);
 
-  const initializeAddressData = async () => {
-    try {
-      await Promise.all([fetchAddresses(), fetchUserProfileForAddress()]);
-    } catch (error) {
-      console.error('Error initializing address data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const initializeAddressData = async () => {
+  try {
+    await Promise.all([fetchAddresses(), fetchUserProfileForAddress()]);
+  } catch (error) {
+    console.error('Error initializing address data:', error);
+    // Continue execution even if there's an error
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchUserProfileForAddress = async () => {
     try {
@@ -121,53 +122,52 @@ export const AddressProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const fetchAddresses = async () => {
+
+  // Replace the fetchAddresses function in AddressContext.tsx with this version
+const fetchAddresses = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken') || await AsyncStorage.getItem('authToken');
+    const backendUrl = getBackendUrl();
+    
+    if (!token) {
+      console.log('No auth token found for fetching addresses');
+      return;
+    }
+    
+    // Try to get user ID from token or profile
+    const userProfile = await AsyncStorage.getItem('userProfile');
+    let userId = null;
+    
+    if (userProfile) {
+      const profile = JSON.parse(userProfile);
+      userId = profile.id || profile._id || profile.userId;
+    }
+    
+    if (!userId) {
+      console.log('No user ID found for fetching addresses');
+      return;
+    }
+    
     try {
-      const token = await AsyncStorage.getItem('userToken') || await AsyncStorage.getItem('authToken');
-      const backendUrl = getBackendUrl();
-
-      if (!token) {
-        // Use profile data from AsyncStorage as fallback
-        const storedProfile = await AsyncStorage.getItem('userProfile');
-        if (storedProfile) {
-          const profile = JSON.parse(storedProfile);
-          if (profile.address) {
-            const profileAddress: Address = {
-              id: 'profile-default',
-              name: profile.name,
-              phone: profile.phoneNumber || profile.altMobile || '',
-              addressLine1: profile.address,
-              city: extractCityFromAddress(profile.address),
-              state: extractStateFromAddress(profile.address),
-              pincode: extractPincodeFromAddress(profile.address) || '000000',
-              country: 'India',
-              isDefault: true,
-            };
-            setAddresses([profileAddress]);
-          }
-        }
-        return;
-      }
-
-      // Fetch addresses from backend
-      const response = await axios.get(`${backendUrl}/api/users/addresses`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(`${backendUrl}/api/addresses/${userId}`);
       
       if (response.data.success) {
-        setAddresses(response.data.data || []);
-        
-        // If no addresses from backend, try to create from profile
-        if (response.data.data.length === 0) {
-          await fetchUserProfileForAddress();
-        }
+        setAddresses(response.data.data);
       }
-    } catch (error) {
-      console.error('Error fetching addresses:', error);
-      // Fallback to profile data
-      await fetchUserProfileForAddress();
+    } catch (apiError) {
+      // If the API endpoint doesn't exist (404), just continue with empty addresses
+      if (apiError.response && apiError.response.status === 404) {
+        console.log('Address API endpoint not found, continuing with empty addresses');
+        return;
+      }
+      // For other errors, log but don't crash
+      console.error('Error fetching addresses:', apiError);
     }
-  };
+  } catch (error) {
+    console.error('Unexpected error in fetchAddresses:', error);
+  }
+};
+
 
   const addAddress = async (newAddress: Omit<Address, 'id'>) => {
     try {

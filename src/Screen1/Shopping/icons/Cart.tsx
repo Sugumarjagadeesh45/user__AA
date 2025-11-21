@@ -1,3 +1,4 @@
+// /Users/webasebrandings/Downloads/new-main/src/Screen1/Shopping/icons/Cart.tsx
 import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -127,12 +128,23 @@ const Cart = () => {
 
   const displayAddress = getDisplayAddress();
 
-  const renderCartItem = ({ item }: any) => (
-    <View style={styles.cartItem}>
-      <Image
-        source={{ uri: item.images && item.images.length > 0 ? getImageUrl(item.images[0]) : 'https://via.placeholder.com/100' }}
-        style={styles.itemImage}
-      />
+const renderCartItem = ({ item }: any) => (
+  <View style={styles.cartItem}>
+    <Image
+      source={{ 
+        uri: item.images && item.images.length > 0 
+          ? getImageUrl(item.images[0]) 
+          : 'https://via.placeholder.com/100' 
+      }}
+      style={styles.itemImage}
+      onError={(e) => {
+        console.log('❌ Cart item image failed:', {
+          product: item.name,
+          url: getImageUrl(item.images?.[0]),
+          error: e.nativeEvent.error
+        });
+      }}
+    />
       <View style={styles.itemDetails}>
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemPrice}>₹{item.price.toFixed(2)}</Text>

@@ -1,3 +1,4 @@
+// /Users/webasebrandings/Downloads/new-main/src/Screen1/Shopping/icons/TopSale.tsx
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -22,7 +23,7 @@ const TopSale = () => {
   const fetchTopSaleProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${BASE_URL}/groceries`);
+      const response = await axios.get(`${BASE_URL}/api/groceries`);
       
       if (response.data.success) {
         const allProducts = response.data.data || [];

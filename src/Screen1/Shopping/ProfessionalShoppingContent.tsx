@@ -416,6 +416,7 @@ const ProfessionalShoppingContent = () => {
         {/* Temporary Debug Info - Remove after testing */}
        
 
+
         {/* Banner Slider */}
         {banners.length > 0 && (
           <View style={styles.bannerSection}>

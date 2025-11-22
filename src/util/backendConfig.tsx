@@ -1,15 +1,85 @@
 
-export const LOCAL_IP = "192.168.1.108";
+// export const LOCAL_IP = "192.168.1.108";
+
+// // Your Render / Production backend URL
+// export const API_BASE_URL = "https://bba-a8lu.onrender.com";
+
+// // ----------- MAIN URL FUNCTIONS -------------- //
+
+// export const getBackendUrl = (): string => {
+//   return process.env.NODE_ENV === "production" 
+//     ? API_BASE_URL 
+//     : `http://${LOCAL_IP}:5001`;
+// };
+
+// export const getSocketUrl = (): string => {
+//   return getBackendUrl();
+// };
+
+// // ----------- IMAGE URL HANDLERS -------------- //
+
+// // Main image URL handler
+// export const getImageUrl = (imagePath: string): string => {
+//   if (!imagePath) return "";
+
+//   const backendUrl = getBackendUrl();
+
+//   // If it's already a complete URL
+//   if (imagePath.startsWith("http")) {
+//     // Replace localhost/127.0.0.1 with actual backend URL
+//     if (imagePath.includes('localhost:5001') || imagePath.includes('127.0.0.1:5001')) {
+//       return imagePath.replace(/http:\/\/[^/]+/, backendUrl);
+//     }
+//     return imagePath;
+//   }
+
+//   // Handle different path formats
+//   if (imagePath.startsWith("/uploads/")) {
+//     return `${backendUrl}${imagePath}`;
+//   }
+
+//   if (imagePath.startsWith("uploads/")) {
+//     return `${backendUrl}/${imagePath}`;
+//   }
+
+//   // Default case
+//   return `${backendUrl}/uploads/${imagePath}`;
+// };
+
+// // Add this missing function that your components need
+// export const getProductImageUrl = (imagePath: string): string => {
+//   return getImageUrl(imagePath);
+// };
+
+// // ----------- ENV BASED API CONFIG -------------- //
+
+// export const API_CONFIG = {
+//   BASE_URL: getBackendUrl(),
+
+//   getImageUrl: (path: string) => getImageUrl(path),
+  
+//   getProductImageUrl: (path: string) => getProductImageUrl(path),
+// };
+
+// // ----------- DEFAULT EXPORT -------------- //
+
+// export default {
+//   getBackendUrl,
+//   getSocketUrl,
+//   getImageUrl,
+//   getProductImageUrl,
+//   API_CONFIG,
+//   LOCAL_IP,
+//   API_BASE_URL,
+// };
 
 // Your Render / Production backend URL
-export const API_BASE_URL = "https://bba-a8lu.onrender.com";
+export const API_BASE_URL = "https://backendddd-2xa6.onrender.com";
 
 // ----------- MAIN URL FUNCTIONS -------------- //
 
 export const getBackendUrl = (): string => {
-  return process.env.NODE_ENV === "production" 
-    ? API_BASE_URL 
-    : `http://${LOCAL_IP}:5001`;
+  return API_BASE_URL; // Always use production URL
 };
 
 export const getSocketUrl = (): string => {
@@ -26,8 +96,8 @@ export const getImageUrl = (imagePath: string): string => {
 
   // If it's already a complete URL
   if (imagePath.startsWith("http")) {
-    // Replace localhost/127.0.0.1 with actual backend URL
-    if (imagePath.includes('localhost:5001') || imagePath.includes('127.0.0.1:5001')) {
+    // Replace any localhost/127.0.0.1 with production backend URL
+    if (imagePath.includes('localhost') || imagePath.includes('127.0.0.1')) {
       return imagePath.replace(/http:\/\/[^/]+/, backendUrl);
     }
     return imagePath;
@@ -69,11 +139,8 @@ export default {
   getImageUrl,
   getProductImageUrl,
   API_CONFIG,
-  LOCAL_IP,
   API_BASE_URL,
 };
-
-
 
 
 

@@ -237,7 +237,7 @@ const Menu: React.FC<MenuProps> = ({
         <View style={styles.menuDivider} />
         <View style={styles.menuFooter}>
           <Text style={styles.footerText}>App Version 1.0.0</Text>
-          <Text style={styles.footerText}>© 2025 TaxiApp Inc.</Text>
+          <Text style={styles.footerText}>© 2025 Eazygo</Text>
         </View>
       </ScrollView>
     </View>

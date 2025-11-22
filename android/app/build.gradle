@@ -14,10 +14,10 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    namespace "com.frontend"
+    namespace "com.webase.eazygo"
 
     defaultConfig {
-        applicationId "com.frontend"
+        applicationId "com.webase.eazygo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

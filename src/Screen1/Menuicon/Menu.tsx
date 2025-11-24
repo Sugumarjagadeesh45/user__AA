@@ -232,6 +232,22 @@ const Menu: React.FC<MenuProps> = ({
             setActivePage('travel');
           }}
         />
+
+
+
+
+<MenuItem
+  icon="shopping-bag"
+  text="My Orders"
+  onPress={() => {
+    toggleMenu();
+    navigation.navigate('EnhancedMyOrders');
+  }}
+/>
+
+
+
+
         <MenuItem icon="settings" text={t('settings')} onPress={navigateToSettings} />
         <MenuItem icon="logout" text={t('logout')} onPress={handleLogout} />
         <View style={styles.menuDivider} />

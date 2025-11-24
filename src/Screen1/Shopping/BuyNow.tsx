@@ -1,14 +1,24 @@
-// /Users/webasebrandings/Downloads/new-main/src/Screen1/Shopping/icons/Cart.tsx
+// /Users/webasebrandings/Downloads/new-main/src/Screen1/Shopping/BuyNow.tsx
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  Image, 
+  TouchableOpacity, 
+  Alert, 
+  ScrollView, 
+  ActivityIndicator 
+} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import { CartContext } from '../ShoppingContent';
-import { useAddress } from '../AddressContext';
-import { getImageUrl } from '../../../../src/util/backendConfig';
+import { CartContext } from './ShoppingContent';
+import { useAddress } from './AddressContext';
+import { getImageUrl } from '../../../src/util/backendConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Cart = () => {
+const BuyNow = () => {
   const navigation = useNavigation();
   const { cartItems, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
   const { defaultAddress, addresses, fetchAddresses, loading: addressLoading } = useAddress();
@@ -48,7 +58,6 @@ const Cart = () => {
       return;
     }
     
-    // Check if we have any address (either from address context or user profile)
     const hasAddress = defaultAddress || (userData && userData.address);
     
     if (!hasAddress) {
@@ -59,18 +68,17 @@ const Cart = () => {
     
     setLoading(true);
     try {
-      // Simulate checkout process
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       Alert.alert(
         'Order Confirmed',
-        `Your order has been placed successfully!\nPayment Method: ${getPaymentMethodText(selectedPayment)}`,
+        `Your order has been placed successfully!\nTotal Amount: ₹${calculateTotal().toFixed(2)}`,
         [
           { 
             text: 'OK', 
             onPress: () => {
               clearCart();
-              navigation.navigate('MyOrders');
+              navigation.navigate('EnhancedMyOrders');
             }
           }
         ]
@@ -86,10 +94,19 @@ const Cart = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+  const calculateShipping = () => {
+    const subtotal = calculateSubtotal();
+    return subtotal > 499 ? 0 : 5.99;
+  };
+
+  const calculateTax = () => {
+    return calculateSubtotal() * 0.08;
+  };
+
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
-    const shipping = 5.99;
-    const tax = subtotal * 0.08;
+    const shipping = calculateShipping();
+    const tax = calculateTax();
     return subtotal + shipping + tax;
   };
 
@@ -97,47 +114,15 @@ const Cart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const getPaymentMethodText = (method: string) => {
-    switch (method) {
-      case 'card': return 'Credit/Debit Card';
-      case 'upi': return 'UPI Payment';
-      case 'cod': return 'Cash on Delivery';
-      default: return 'Credit/Debit Card';
-    }
-  };
-
-  const calculateExpectedDeliveryDate = () => {
+  const getExpectedDeliveryDate = () => {
     const today = new Date();
-    const deliveryDate = new Date(today);
-    deliveryDate.setDate(today.getDate() + 3); // Standard delivery in 3 days
-    return deliveryDate.toLocaleDateString('en-US', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short'
+    today.setDate(today.getDate() + 2); // 2 days from now
+    return today.toLocaleDateString('en-IN', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long' 
     });
   };
-
-  const getDisplayAddress = () => {
-    if (defaultAddress) {
-      return defaultAddress;
-    }
-    
-    if (userData && userData.address) {
-      return {
-        name: userData.name || 'Customer',
-        phone: userData.phoneNumber || userData.altMobile || '',
-        addressLine1: userData.address,
-        city: extractCityFromAddress(userData.address),
-        state: extractStateFromAddress(userData.address),
-        pincode: extractPincodeFromAddress(userData.address) || '000000',
-        country: 'India',
-      };
-    }
-    
-    return null;
-  };
-
-  const displayAddress = getDisplayAddress();
 
   const renderCartItem = ({ item }: any) => (
     <View style={styles.cartItem}>
@@ -148,54 +133,53 @@ const Cart = () => {
             : 'https://via.placeholder.com/100' 
         }}
         style={styles.itemImage}
-        onError={(e) => {
-          console.log('❌ Cart item image failed:', {
-            product: item.name,
-            url: getImageUrl(item.images?.[0]),
-            error: e.nativeEvent.error
-          });
-        }}
       />
       <View style={styles.itemDetails}>
         <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
-        <Text style={styles.itemPrice}>₹{item.price.toFixed(2)}</Text>
-        <Text style={styles.expectedDelivery}>
-          Expected delivery by {calculateExpectedDeliveryDate()}
+        <Text style={styles.itemDescription} numberOfLines={2}>
+          {item.description}
         </Text>
-        
-        <View style={styles.quantityContainer}>
-          <TouchableOpacity 
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item._id, item.quantity - 1)}
-          >
-            <MaterialIcons name="remove" size={18} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.quantity}>{item.quantity}</Text>
-          <TouchableOpacity 
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item._id, item.quantity + 1)}
-          >
-            <MaterialIcons name="add" size={18} color="#333" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.deliveryDate}>
+          Expected delivery: {getExpectedDeliveryDate()}
+        </Text>
+        <Text style={styles.itemPrice}>₹{item.price.toFixed(2)}</Text>
         
         <View style={styles.itemActions}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => handleRemoveItem(item._id)}
-          >
-            <MaterialIcons name="delete" size={18} color="#e53935" />
-            <Text style={styles.actionButtonText}>Delete</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('Buying', { product: item })}
-          >
-            <MaterialIcons name="shopping-bag" size={18} color="#4caf50" />
-            <Text style={styles.actionButtonText}>Shop</Text>
-          </TouchableOpacity>
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity 
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item._id, item.quantity - 1)}
+            >
+              <MaterialIcons name="remove" size={18} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.quantity}>{item.quantity}</Text>
+            <TouchableOpacity 
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item._id, item.quantity + 1)}
+            >
+              <MaterialIcons name="add" size={18} color="#333" />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.actionButtons}>
+            <TouchableOpacity 
+              style={styles.shopButton}
+              onPress={() => navigation.navigate('EnhancedBuying', { product: item })}
+            >
+              <MaterialIcons name="store" size={16} color="#4caf50" />
+              <Text style={styles.shopButtonText}>Shop</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={() => handleRemoveItem(item._id)}
+            >
+              <MaterialIcons name="delete" size={16} color="#e53935" />
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+        
+        <Text style={styles.itemTotal}>₹{(item.price * item.quantity).toFixed(2)}</Text>
       </View>
     </View>
   );
@@ -216,7 +200,7 @@ const Cart = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Cart</Text>
+        <Text style={styles.headerTitle}>My Cart ({calculateTotalItems()} items)</Text>
         {cartItems.length > 0 && (
           <TouchableOpacity onPress={clearCart} style={styles.clearButton}>
             <Text style={styles.clearButtonText}>Clear All</Text>
@@ -230,66 +214,55 @@ const Cart = () => {
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptyText}>Looks like you haven't added anything to your cart yet</Text>
           <TouchableOpacity 
-            style={styles.shopButton} 
+            style={styles.shopButtonLarge} 
             onPress={() => navigation.navigate('Shopping')}
           >
-            <Text style={styles.shopButtonText}>Start Shopping</Text>
+            <Text style={styles.shopButtonLargeText}>Start Shopping</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <>
           <ScrollView style={styles.cartList}>
-            {/* Cart Summary */}
-            <View style={styles.cartSummary}>
-              <Text style={styles.summaryTitle}>Cart Summary</Text>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Sub Total</Text>
-                <Text style={styles.summaryValue}>₹{calculateSubtotal().toFixed(2)}</Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.proceedToBuyButton}
-                onPress={() => navigation.navigate('Checkout', { cartItems })}
-              >
-                <Text style={styles.proceedToBuyText}>
-                  Proceed to Buy ({calculateTotalItems()} total items)
-                </Text>
-              </TouchableOpacity>
+            {/* Cart Items */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Cart Items</Text>
+              <FlatList
+                data={cartItems}
+                renderItem={renderCartItem}
+                keyExtractor={(item) => item._id}
+                scrollEnabled={false}
+              />
             </View>
 
-            <FlatList
-              data={cartItems}
-              renderItem={renderCartItem}
-              keyExtractor={(item) => item._id}
-              scrollEnabled={false}
-            />
-
             {/* Order Summary */}
-            <View style={styles.summaryContainer}>
-              <Text style={styles.summaryTitle}>Order Summary</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Order Summary</Text>
               
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Items ({calculateTotalItems()})</Text>
+                <Text style={styles.summaryLabel}>Subtotal ({calculateTotalItems()} items)</Text>
                 <Text style={styles.summaryValue}>₹{calculateSubtotal().toFixed(2)}</Text>
               </View>
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Shipping</Text>
-                <Text style={styles.summaryValue}>₹5.99</Text>
+                <Text style={styles.summaryValue}>
+                  {calculateShipping() === 0 ? 'FREE' : `₹${calculateShipping().toFixed(2)}`}
+                </Text>
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tax</Text>
-                <Text style={styles.summaryValue}>₹{(calculateSubtotal() * 0.08).toFixed(2)}</Text>
+                <Text style={styles.summaryLabel}>Tax (8%)</Text>
+                <Text style={styles.summaryValue}>₹{calculateTax().toFixed(2)}</Text>
               </View>
               
               <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalLabel}>Total Amount</Text>
                 <Text style={styles.totalValue}>₹{calculateTotal().toFixed(2)}</Text>
               </View>
             </View>
 
             {/* Delivery Address */}
-            <View style={styles.addressContainer}>
+            <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Delivery Address</Text>
                 <TouchableOpacity 
@@ -297,29 +270,28 @@ const Cart = () => {
                   style={styles.editButton}
                 >
                   <Text style={styles.editButtonText}>
-                    {displayAddress ? 'Edit' : 'Add'}
+                    {defaultAddress ? 'Edit' : 'Add'}
                   </Text>
                 </TouchableOpacity>
               </View>
-              {displayAddress ? (
+              {defaultAddress ? (
                 <View style={styles.addressCard}>
                   <View style={styles.addressHeader}>
-                    <Text style={styles.addressName}>{displayAddress.name}</Text>
-                    {defaultAddress && defaultAddress.isDefault && (
+                    <Text style={styles.addressName}>{defaultAddress.name}</Text>
+                    {defaultAddress.isDefault && (
                       <View style={styles.defaultBadge}>
                         <Text style={styles.defaultBadgeText}>Default</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={styles.addressPhone}>{displayAddress.phone}</Text>
-                  <Text style={styles.addressText}>{displayAddress.addressLine1}</Text>
-                  {displayAddress.addressLine2 && (
-                    <Text style={styles.addressText}>{displayAddress.addressLine2}</Text>
+                  <Text style={styles.addressPhone}>{defaultAddress.phone}</Text>
+                  <Text style={styles.addressText}>{defaultAddress.addressLine1}</Text>
+                  {defaultAddress.addressLine2 && (
+                    <Text style={styles.addressText}>{defaultAddress.addressLine2}</Text>
                   )}
                   <Text style={styles.addressText}>
-                    {displayAddress.city}, {displayAddress.state} - {displayAddress.pincode}
+                    {defaultAddress.city}, {defaultAddress.state} - {defaultAddress.pincode}
                   </Text>
-                  <Text style={styles.addressText}>{displayAddress.country}</Text>
                 </View>
               ) : (
                 <TouchableOpacity 
@@ -333,7 +305,7 @@ const Cart = () => {
             </View>
 
             {/* Payment Method */}
-            <View style={styles.paymentContainer}>
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Payment Method</Text>
               
               <TouchableOpacity 
@@ -389,13 +361,13 @@ const Cart = () => {
             <TouchableOpacity 
               style={[styles.checkoutButton, loading && styles.disabledButton]} 
               onPress={handleCheckout}
-              disabled={loading || !displayAddress}
+              disabled={loading || !defaultAddress}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text style={styles.checkoutButtonText}>
-                  {!displayAddress ? 'Add Address First' : 'Proceed to Checkout'}
+                  {!defaultAddress ? 'Add Address First' : `Proceed to Checkout (${calculateTotalItems()} items)`}
                 </Text>
               )}
             </TouchableOpacity>
@@ -404,22 +376,6 @@ const Cart = () => {
       )}
     </View>
   );
-};
-
-// Helper functions
-const extractCityFromAddress = (address: string): string => {
-  const cityMatch = address.match(/(\w+)(?=\s*\d{6}|$)/);
-  return cityMatch ? cityMatch[1] : 'City';
-};
-
-const extractStateFromAddress = (address: string): string => {
-  const stateMatch = address.match(/(Maharashtra|Karnataka|Tamil Nadu|Delhi|Kerala|Gujarat)/i);
-  return stateMatch ? stateMatch[1] : 'State';
-};
-
-const extractPincodeFromAddress = (address: string): string | null => {
-  const pincodeMatch = address.match(/\b\d{6}\b/);
-  return pincodeMatch ? pincodeMatch[0] : null;
 };
 
 const styles = StyleSheet.create({
@@ -468,43 +424,27 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  cartSummary: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 15,
+  section: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 15,
   },
-  summaryTitle: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 10,
   },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+  editButton: {
+    padding: 5,
   },
-  summaryLabel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  summaryValue: {
-    fontSize: 16,
-    color: '#333',
+  editButtonText: {
+    color: '#4caf50',
+    fontSize: 14,
     fontWeight: '500',
-  },
-  proceedToBuyButton: {
-    backgroundColor: '#4caf50',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  proceedToBuyText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   cartItem: {
     flexDirection: 'row',
@@ -533,12 +473,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   itemDescription: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 5,
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  deliveryDate: {
+    fontSize: 12,
+    color: '#4caf50',
+    marginBottom: 8,
   },
   itemPrice: {
     fontSize: 16,
@@ -546,15 +492,14 @@ const styles = StyleSheet.create({
     color: '#4caf50',
     marginBottom: 12,
   },
-  expectedDelivery: {
-    fontSize: 12,
-    color: '#4caf50',
-    marginBottom: 10,
+  itemActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   quantityButton: {
     width: 32,
@@ -574,23 +519,45 @@ const styles = StyleSheet.create({
     minWidth: 20,
     textAlign: 'center',
   },
-  itemActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  actionButton: {
+  actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    backgroundColor: '#f5f5f5',
   },
-  actionButtonText: {
+  shopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f8e9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  shopButtonText: {
+    color: '#4caf50',
     fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffebee',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  deleteButtonText: {
+    color: '#e53935',
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  itemTotal: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#333',
-    marginLeft: 5,
+    marginTop: 8,
+    textAlign: 'right',
   },
   emptyContainer: {
     flex: 1,
@@ -612,22 +579,30 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 30,
   },
-  shopButton: {
+  shopButtonLarge: {
     backgroundColor: '#4caf50',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 30,
   },
-  shopButtonText: {
+  shopButtonLargeText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  summaryContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
   },
   totalRow: {
     borderTopWidth: 1,
@@ -644,28 +619,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#4caf50',
-  },
-  addressContainer: {
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  editButton: {
-    padding: 5,
-  },
-  editButtonText: {
-    color: '#4caf50',
-    fontSize: 14,
-    fontWeight: '500',
   },
   addressCard: {
     backgroundColor: '#f8f9fa',
@@ -721,9 +674,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 8,
-  },
-  paymentContainer: {
-    marginBottom: 100,
   },
   paymentCard: {
     flexDirection: 'row',
@@ -797,4 +747,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Cart;
+export default BuyNow;

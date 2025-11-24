@@ -13,13 +13,22 @@ import WelcomeScreen2 from './src/WelcomeScreen2';
 import WelcomeScreen3 from './src/WelcomeScreen3';
 import ProfileScreen from './src/Screen1/Menuicon/ProfileScreen';
 import Setting from './src/Screen1/Menuicon/Setting';
+import MyOrders from './src/Screen1/Menuicon/MyOrders';
+
+import BuyNow from './src/Screen1/Shopping/BuyNow';
+
+
+
 import ReportDriver from './src/Screen1/Menuicon/ReportDriver';
 import Cart from './src/Screen1/Shopping/icons/Cart';
-import Buying from './src/Screen1/Shopping/icons/Buying';
-import Order from './src/Screen1/Shopping/icons/Order';
-import TopSale from './src/Screen1/Shopping/icons/TopSale';
-import ViewAll from './src/Screen1/Shopping/ViewAll';
+
 import AddressManagement from './src/Screen1/Shopping/AddressManagement';
+
+// Import the new enhanced components
+import EnhancedBuying from './src/Screen1/Shopping/EnhancedBuying';
+import EnhancedCart from './src/Screen1/Shopping/EnhancedCart';
+import EnhancedMyOrders from './src/Screen1/Shopping/EnhancedMyOrders';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
@@ -40,6 +49,10 @@ export type RootStackParamList = {
   TopSale: undefined;
   ViewAll: { title: string; products: any[]; addToCart: any };
   AddressManagement: undefined;
+  // Enhanced shopping screens
+  EnhancedBuying: { product: any };
+  EnhancedCart: undefined;
+  EnhancedMyOrders: undefined;
 };
 
 export default function App() {
@@ -99,20 +112,33 @@ export default function App() {
               initialRouteName={getInitialRoute()}
               screenOptions={{ headerShown: false }}
             >
+              {/* App Intro & Auth Screens */}
               <Stack.Screen name="SplashScreen" component={SplashScreen} />
               <Stack.Screen name="WelcomeScreen1" component={WelcomeScreen1} />
               <Stack.Screen name="WelcomeScreen2" component={WelcomeScreen2} />
               <Stack.Screen name="WelcomeScreen3" component={WelcomeScreen3} />
+              
+              {/* Main App Screen */}
               <Stack.Screen name="Screen1" component={Screen1} />
+              
+              {/* Menu & Profile Screens */}
               <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
               <Stack.Screen name="Setting" component={Setting} />
               <Stack.Screen name="ReportDriver" component={ReportDriver} />
+              
+              {/* Shopping Screens - Original */}
               <Stack.Screen name="Cart" component={Cart} />
-              <Stack.Screen name="Buying" component={Buying} />
-              <Stack.Screen name="Order" component={Order} />
-              <Stack.Screen name="TopSale" component={TopSale} />
-              <Stack.Screen name="ViewAll" component={ViewAll} />
+
+          <Stack.Screen name="BuyNow" component={BuyNow} />
+
+
+
               <Stack.Screen name="AddressManagement" component={AddressManagement} />
+              
+              {/* Enhanced Shopping Screens */}
+              <Stack.Screen name="EnhancedBuying" component={EnhancedBuying} />
+              <Stack.Screen name="EnhancedCart" component={EnhancedCart} />
+              <Stack.Screen name="EnhancedMyOrders" component={EnhancedMyOrders} />
             </Stack.Navigator>
           </NavigationContainer>
         </CartProvider>
@@ -139,6 +165,7 @@ const styles = StyleSheet.create({
 // import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // import { LanguageProvider } from './src/constants/LanguageContext';
 // import { CartProvider } from './src/Screen1/Shopping/ShoppingContent';
+// import { AddressProvider } from './src/Screen1/Shopping/AddressContext';
 // import Screen1 from './src/Screen1';
 // import SplashScreen from './src/SplashScreen';
 // import WelcomeScreen1 from './src/WelcomeScreen1';
@@ -152,6 +179,7 @@ const styles = StyleSheet.create({
 // import Order from './src/Screen1/Shopping/icons/Order';
 // import TopSale from './src/Screen1/Shopping/icons/TopSale';
 // import ViewAll from './src/Screen1/Shopping/ViewAll';
+// import AddressManagement from './src/Screen1/Shopping/AddressManagement';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
@@ -171,6 +199,7 @@ const styles = StyleSheet.create({
 //   Order: undefined;
 //   TopSale: undefined;
 //   ViewAll: { title: string; products: any[]; addToCart: any };
+//   AddressManagement: undefined;
 // };
 
 // export default function App() {
@@ -223,28 +252,31 @@ const styles = StyleSheet.create({
 
 //   return (
 //     <LanguageProvider>
-//       <CartProvider>
-//         <NavigationContainer>
-//           <Stack.Navigator 
-//             initialRouteName={getInitialRoute()}
-//             screenOptions={{ headerShown: false }}
-//           >
-//             <Stack.Screen name="SplashScreen" component={SplashScreen} />
-//             <Stack.Screen name="WelcomeScreen1" component={WelcomeScreen1} />
-//             <Stack.Screen name="WelcomeScreen2" component={WelcomeScreen2} />
-//             <Stack.Screen name="WelcomeScreen3" component={WelcomeScreen3} />
-//             <Stack.Screen name="Screen1" component={Screen1} />
-//             <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-//             <Stack.Screen name="Setting" component={Setting} />
-//             <Stack.Screen name="ReportDriver" component={ReportDriver} />
-//             <Stack.Screen name="Cart" component={Cart} />
-//             <Stack.Screen name="Buying" component={Buying} />
-//             <Stack.Screen name="Order" component={Order} />
-//             <Stack.Screen name="TopSale" component={TopSale} />
-//             <Stack.Screen name="ViewAll" component={ViewAll} />
-//           </Stack.Navigator>
-//         </NavigationContainer>
-//       </CartProvider>
+//       <AddressProvider>
+//         <CartProvider>
+//           <NavigationContainer>
+//             <Stack.Navigator 
+//               initialRouteName={getInitialRoute()}
+//               screenOptions={{ headerShown: false }}
+//             >
+//               <Stack.Screen name="SplashScreen" component={SplashScreen} />
+//               <Stack.Screen name="WelcomeScreen1" component={WelcomeScreen1} />
+//               <Stack.Screen name="WelcomeScreen2" component={WelcomeScreen2} />
+//               <Stack.Screen name="WelcomeScreen3" component={WelcomeScreen3} />
+//               <Stack.Screen name="Screen1" component={Screen1} />
+//               <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+//               <Stack.Screen name="Setting" component={Setting} />
+//               <Stack.Screen name="ReportDriver" component={ReportDriver} />
+//               <Stack.Screen name="Cart" component={Cart} />
+//               <Stack.Screen name="Buying" component={Buying} />
+//               <Stack.Screen name="Order" component={Order} />
+//               <Stack.Screen name="TopSale" component={TopSale} />
+//               <Stack.Screen name="ViewAll" component={ViewAll} />
+//               <Stack.Screen name="AddressManagement" component={AddressManagement} />
+//             </Stack.Navigator>
+//           </NavigationContainer>
+//         </CartProvider>
+//       </AddressProvider>
 //     </LanguageProvider>
 //   );
 // }
@@ -257,3 +289,4 @@ const styles = StyleSheet.create({
 //     backgroundColor: '#f8f9fa',
 //   },
 // });
+
